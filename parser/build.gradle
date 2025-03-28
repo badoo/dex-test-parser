@@ -3,20 +3,15 @@ plugins {
     id 'maven-publish'
     id 'signing'
     id 'org.jetbrains.kotlin.jvm'
-    id 'org.jetbrains.dokka' version '1.4.32'
-    id 'com.github.johnrengelman.shadow' version '6.1.0'
+    id 'org.jetbrains.dokka' version '2.0.0'
+    id 'com.gradleup.shadow' version '8.3.6'
 }
 
 mainClassName = 'com.linkedin.dex.parser.DexParser'
 
-task javadocJar(type: Jar, dependsOn: dokkaJavadoc) {
-    classifier 'javadoc'
-    from dokkaJavadoc.outputDirectory
-}
-
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 
     withSourcesJar()
 }
@@ -29,7 +24,7 @@ dependencies {
     api "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
     implementation "com.github.ajalt.clikt:clikt:3.1.0"
 
-    testImplementation 'junit:junit:4.13.1'
+    testImplementation 'junit:junit:4.13.2'
 }
 
 task testParsing(dependsOn: ':test-app:assembleDebugAndroidTest', type: JavaExec) {
@@ -64,12 +59,6 @@ publishing {
             from components.java
             artifact(shadowJar) {
                 classifier "fat"
-            }
-            // It would be nice to be able to use withJavadocJar() instead of defining the artifact
-            // manually, but Gradle doesn't expose a way to customize what task generates the
-            // javadoc and we need to use Dokka for Kotlin code.
-            artifact(javadocJar) {
-                classifier = 'javadoc'
             }
             pom {
                 name = 'Dex Test Parser'

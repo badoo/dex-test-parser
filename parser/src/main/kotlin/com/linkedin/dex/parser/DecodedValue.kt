@@ -18,6 +18,7 @@ sealed class DecodedValue {
     data class DecodedLong(val value: Long) : DecodedValue()
     data class DecodedFloat(val value: Float) : DecodedValue()
     data class DecodedDouble(val value: Double) : DecodedValue()
+
     // Value is an index into the string table
     data class DecodedString(val value: String) : DecodedValue()
 
@@ -25,10 +26,14 @@ sealed class DecodedValue {
     object DecodedNull : DecodedValue()
     data class DecodedBoolean(val value: Boolean) : DecodedValue()
     data class DecodedEnum(val value: String) : DecodedValue()
-    data class DecodedArrayValue(val values: Array<DecodedValue>): DecodedValue()
+    data class DecodedArrayValue(val values: Array<DecodedValue>) : DecodedValue()
+    data class DecodedAnnotationValue(
+        val type: DecodedType,
+        val argToValueMap: Map<String, DecodedValue>
+    ) :
+        DecodedValue()
     // TODO: DecodedField
     // TODO: DecodedMethod
-    // TODO: DecodedAnnotationValue
 
     companion object {
         private fun readStringInPosition(dexFile: DexFile, position: Int): String {
@@ -54,11 +59,13 @@ sealed class DecodedValue {
                     val position = dexFile.stringIds[encodedValue.value].stringDataOff
                     return DecodedString(readStringInPosition(dexFile, position))
                 }
+
                 is EncodedValue.EncodedType -> {
                     val index = dexFile.typeIds[encodedValue.value].descriptorIdx
                     val position = dexFile.stringIds[index].stringDataOff
                     return DecodedType(readStringInPosition(dexFile, position))
                 }
+
                 is EncodedValue.EncodedBoolean -> return DecodedBoolean(encodedValue.value)
                 is EncodedValue.EncodedNull -> return DecodedNull
                 is EncodedValue.EncodedEnum -> {
@@ -66,7 +73,21 @@ sealed class DecodedValue {
                     val position = dexFile.stringIds[index].stringDataOff
                     return DecodedEnum(readStringInPosition(dexFile, position))
                 }
-                is EncodedValue.EncodedArrayValue -> return DecodedArrayValue(encodedValue.value.values.map { create(dexFile, it) }.toTypedArray())
+
+                is EncodedValue.EncodedArrayValue ->
+                    return DecodedArrayValue(encodedValue.value.values.map { create(dexFile, it) }.toTypedArray())
+
+                is EncodedValue.EncodedAnnotationValue -> {
+                    val type = create(dexFile, EncodedValue.EncodedType(encodedValue.value.typeIdx)) as DecodedType
+                    return DecodedAnnotationValue(
+                        type,
+                        encodedValue.value.elements.associate {
+                            Pair(
+                                (create(dexFile, EncodedValue.EncodedString(it.nameIdx)) as DecodedString).value,
+                                create(dexFile, it.value)
+                            )
+                        })
+                }
 
                 else -> return DecodedNull
             }

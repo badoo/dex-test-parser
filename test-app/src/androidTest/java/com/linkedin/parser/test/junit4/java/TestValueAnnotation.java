@@ -4,15 +4,17 @@
  */
 package com.linkedin.parser.test.junit4.java;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.annotation.Repeatable;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ java.lang.annotation.ElementType.METHOD, ElementType.TYPE })
+@Target({ ElementType.METHOD, ElementType.TYPE })
+@Repeatable(TestValueAnnotations.class)
 public @interface TestValueAnnotation {
 
     @NonNull

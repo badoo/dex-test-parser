@@ -43,40 +43,65 @@ fun DexFile.getClassAnnotationValues(directory: AnnotationsDirectoryItem?): List
 
     val classAnnotationSetItem = AnnotationSetItem.create(byteBuffer, directory.classAnnotationsOff)
 
-    return classAnnotationSetItem.entries.map { AnnotationItem.create(byteBuffer, it.annotationOff) }.map { getTestAnnotation(it) }
+    return classAnnotationSetItem.entries.map { AnnotationItem.create(byteBuffer, it.annotationOff) }
+        .flatMap { getTestAnnotation(it) }
 }
 
 /**
  * @return A list of annotation objects for all the method-level annotations
  */
-fun DexFile.getMethodAnnotationValues(methodId: MethodIdItem, annotationsDirectory: AnnotationsDirectoryItem?): List<TestAnnotation> {
+fun DexFile.getMethodAnnotationValues(
+    methodId: MethodIdItem,
+    annotationsDirectory: AnnotationsDirectoryItem?
+): List<TestAnnotation> {
     val methodAnnotations = annotationsDirectory?.methodAnnotations ?: emptyArray<MethodAnnotation>()
     val annotationSets = methodAnnotations.filter { methodIds[it.methodIdx] == methodId }
-            .map { (_, annotationsOff) ->
-                AnnotationSetItem.create(byteBuffer, annotationsOff)
-            }
+        .map { (_, annotationsOff) ->
+            AnnotationSetItem.create(byteBuffer, annotationsOff)
+        }
 
     return annotationSets.map {
-        it.entries.map { AnnotationItem.create(byteBuffer, it.annotationOff) }.map { getTestAnnotation(it) }
+        it.entries.map { AnnotationItem.create(byteBuffer, it.annotationOff) }.flatMap { getTestAnnotation(it) }
     }.flatten()
 }
 
-fun DexFile.getTestAnnotation(annotationItem: AnnotationItem): TestAnnotation {
-    val name = formatDescriptor(ParseUtils.parseDescriptor(byteBuffer,
-            typeIds[annotationItem.encodedAnnotation.typeIdx], stringIds))
+fun DexFile.getTestAnnotation(annotationItem: AnnotationItem): List<TestAnnotation> {
+    val name = formatDescriptor(
+        ParseUtils.parseDescriptor(
+            byteBuffer,
+            typeIds[annotationItem.encodedAnnotation.typeIdx], stringIds
+        )
+    )
     val encodedAnnotationValues = annotationItem.encodedAnnotation.elements
     val values = mutableMapOf<String, DecodedValue>()
+    val result = mutableListOf<TestAnnotation>()
+    var isRepeatedAnnotation = false
     for (encodedAnnotationValue in encodedAnnotationValues) {
         val value = DecodedValue.create(this, encodedAnnotationValue.value)
-        val valueName = ParseUtils.parseValueName(byteBuffer, stringIds, encodedAnnotationValue.nameIdx)
-
-        values.put(valueName, value)
+        if (value is DecodedValue.DecodedArrayValue
+            && value.values.isNotEmpty()
+            && value.values[0] is DecodedValue.DecodedAnnotationValue
+        ) {
+            isRepeatedAnnotation = true
+            value.values.forEach {
+                if (it is DecodedValue.DecodedAnnotationValue) {
+                    val innerName = formatDescriptor(it.type.value)
+                    //TODO: Support inheritance of repeated annotations
+                    result += TestAnnotation(innerName, it.argToValueMap, false)
+                }
+            }
+        } else {
+            val valueName = ParseUtils.parseValueName(byteBuffer, stringIds, encodedAnnotationValue.nameIdx)
+            values.put(valueName, value)
+        }
     }
 
-    val annotationClassDef = typeIdToClassDefMap[annotationItem.encodedAnnotation.typeIdx]
-    val inherited = checkIfAnnotationIsInherited(annotationClassDef)
-
-    return TestAnnotation(name, values, inherited)
+    if (!isRepeatedAnnotation) {
+        val annotationClassDef = typeIdToClassDefMap[annotationItem.encodedAnnotation.typeIdx]
+        val inherited = checkIfAnnotationIsInherited(annotationClassDef)
+        result += TestAnnotation(name, values, inherited)
+    }
+    return result
 }
 
 private fun DexFile.checkIfAnnotationIsInherited(annotationClassDef: ClassDefItem?): Boolean {

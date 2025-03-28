@@ -6,7 +6,10 @@ package com.linkedin.parser.test.junit4.kotlin
 
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.experimental.runners.Enclosed
+import org.junit.runner.RunWith
 
+@RunWith(Enclosed::class)
 class KotlinJUnit4TestInsideStaticInnerClass {
 
     class InnerClass {

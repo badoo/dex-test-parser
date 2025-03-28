@@ -4,7 +4,7 @@
  */
 package com.linkedin.parser.test.junit4.kotlin
 
-import android.support.test.filters.LargeTest
+import androidx.test.filters.LargeTest
 import org.junit.Assert.assertTrue
 import org.junit.Test
 

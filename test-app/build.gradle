@@ -1,20 +1,31 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+apply plugin: 'org.jetbrains.kotlin.android'
 
 android {
-    compileSdkVersion 26
-    buildToolsVersion "29.0.2"
+    namespace = "com.linkedin.parser.test"
+    compileSdk 35
     defaultConfig {
         applicationId "com.linkedin.parser.test"
-        minSdkVersion 15
-        targetSdkVersion 26
+        minSdkVersion 23
+        targetSdkVersion 35
         versionCode 1
         versionName "1.0"
     }
-    lintOptions {
+    lint {
         abortOnError false
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+}
 
+kotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_21
+    }
 }
 
 repositories {
@@ -23,5 +34,8 @@ repositories {
 }
 
 dependencies {
-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
+    androidTestImplementation 'androidx.test:rules:1.6.1'
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
 }

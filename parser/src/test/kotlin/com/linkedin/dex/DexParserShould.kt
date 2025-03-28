@@ -19,19 +19,32 @@ class DexParserShould {
     fun parseCorrectNumberOfTestMethods() {
         val testMethods = DexParser.findTestNames(APK_PATH, listOf(""))
 
-        assertEquals(23, testMethods.size)
+        assertEquals(16, testMethods.size)
     }
 
     @Test
     fun parseMethodWithMultipleMethodAnnotations() {
         val testMethods = DexParser.findTestMethods(APK_PATH, listOf("")).filter { it.annotations.filter { it.name.contains("TestValueAnnotation") }.isNotEmpty() }
 
-        assertEquals(5, testMethods.size)
+        assertEquals(6, testMethods.size)
 
         val method = testMethods[1]
         assertEquals(method.testName, "com.linkedin.parser.test.junit4.java.BasicJUnit4#basicJUnit4")
         // TestValueAnnotation at the class level, Test annotation at the method level, and TestValueAnnotation at the method level
         assertEquals(method.annotations.size, 3)
+    }
+
+    @Test
+    fun parseMethodWithRepeatableMethodAnnotations() {
+        val testMethods = DexParser.findTestMethods(APK_PATH, listOf("")).filter { it.annotations.filter { it.name.contains("TestValueAnnotation") }.isNotEmpty() }
+        val method = testMethods[5]
+        assertEquals(method.testName, "com.linkedin.parser.test.junit4.java.BasicJUnit4#repeatableJUnit4")
+        // TestValueAnnotation at the class level, Test annotation at the method level, and 3 repeatable TestValueAnnotation at the method level
+        assertEquals(method.annotations.size, 5)
+        assertEquals(method.annotations[1].values["stringValue"], DecodedValue.DecodedString("On a method"))
+        assertEquals(method.annotations[2].values["intValue"], DecodedValue.DecodedInt(12345))
+        assertEquals(method.annotations[3].values["boolValue"], DecodedValue.DecodedBoolean(true))
+        assertEquals(method.annotations[3].values["longValue"], DecodedValue.DecodedLong(56789))
     }
 
     @Test

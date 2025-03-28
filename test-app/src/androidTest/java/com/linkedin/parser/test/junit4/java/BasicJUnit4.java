@@ -20,6 +20,14 @@ public class BasicJUnit4 extends ConcreteTest {
     }
 
     @Test
+    @TestValueAnnotation(stringValue = "On a method")
+    @TestValueAnnotation(intValue = 12345)
+    @TestValueAnnotation(longValue = 56789L, boolValue = true)
+    public void repeatableJUnit4() {
+        assertTrue(true);
+    }
+
+    @Test
     @TestValueAnnotation(floatValue = 0.25f, doubleValue = 0.5, byteValue = 0x0f, charValue = '?', shortValue = 3, enumValue = TestEnum.FAIL, typeValue = Test.class, arrayTypeValue = { Function.class, Integer.class})
     @FloatRange(from = 0f, to = Float.MAX_VALUE)
     public void basicJUnit4Second() {
