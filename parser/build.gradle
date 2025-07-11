@@ -103,6 +103,14 @@ publishing {
                 password = sonatypePassword
             }
         }
+        Provider<String> mavenUrl = providers.gradleProperty("publishing.mavenUrl")
+        if (mavenUrl.isPresent()) {
+            maven {
+                name = "internalMaven"
+                url = mavenUrl
+                credentials(PasswordCredentials)
+            }
+        }
     }
 }
 
