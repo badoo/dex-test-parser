@@ -57,6 +57,7 @@ publishing {
     publications {
         maven(MavenPublication) { publication ->
             from components.java
+            artifactId = "dex-test-parser"
             artifact(shadowJar) {
                 classifier "fat"
             }
