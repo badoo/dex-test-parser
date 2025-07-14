@@ -74,3 +74,23 @@ repositories {
 ```
 
 You can find the latest snapshot version to use in the [gradle.properties](gradle.properties) file.
+
+## Publishing
+
+DEX Test parser can be published to a custom Maven repository, if URL to the repository is provided via `internalMavenUrl` Gradle property.
+
+When publishing to an internal repository, use the publication date as the version, e.g. `2025.07.14`.
+
+```shell
+./gradlew build
+
+./gradlew \
+  -PinternalMavenUrl=<url> \
+  -PinternalMavenUsername=<username> \
+  -PinternalMavenPassword=<password> \
+  -PVERSION_NAME=<version> \
+  publishAllPublicationsToInternalMavenRepository
+
+git tag <version>
+git push origin <version>
+```
